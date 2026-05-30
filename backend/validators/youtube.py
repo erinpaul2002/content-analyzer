@@ -49,6 +49,7 @@ def get_youtube_video_details(video_id:str) -> dict|None:
             "duration": data['items'][0]['contentDetails']['duration'],
             "upload_date": data['items'][0]['snippet']['publishedAt'],
             "creator": data['items'][0]['snippet']['channelTitle'],
+            "title": data['items'][0]['snippet']['title'],
             "subscribercount": channel_details['subscribers'],
             "profile_url": channel_details['profile_url'],
             "thumbnail_url": data['items'][0]['snippet']['thumbnails']['high']['url'],

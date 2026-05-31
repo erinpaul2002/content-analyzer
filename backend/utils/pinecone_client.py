@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
+from typing import Optional
 
 load_dotenv()
 

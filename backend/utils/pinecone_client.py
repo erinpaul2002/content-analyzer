@@ -44,3 +44,22 @@ class PineconeHandler:
             raise RuntimeError("Namespace is required for upserting vectors")
         except Exception as e:
             raise RuntimeError(f"Failed to upsert vectors: {e}")    
+
+    def upsert_records(
+        self,
+        records: List[dict],
+        namespace: str,
+    ) -> dict:
+
+        index = self.get_index()
+
+        if not namespace:
+            raise ValueError("Namespace is required for upserting records")
+        try:
+            response = index.upsert_records(
+                namespace=namespace,
+                records=records,
+            )
+            return response
+        except Exception as e:
+            raise RuntimeError(f"Failed to upsert records: {e}")

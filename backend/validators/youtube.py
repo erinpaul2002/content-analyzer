@@ -1,11 +1,9 @@
 import re
 import requests
-import os
-from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
+from config.settings import settings
 
-load_dotenv()
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+YOUTUBE_API_KEY = settings.youtube_api_key
 
 def extract_youtube_video_id(url: str) -> str|None:
     sanitized_url = url.strip()

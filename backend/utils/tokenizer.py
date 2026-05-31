@@ -1,32 +1,14 @@
-from typing import TypedDict,List
+from typing import List
 from functools import lru_cache
 from transformers import AutoTokenizer
-import os
-from dotenv import load_dotenv
 from utils.text_utils import clean_text
-
-load_dotenv()
+from config.settings import settings
+from domain.models import Segment,Chunk
 
 TARGET_TOKEN_COUNT=480
 TOKEN_OVERLAP=50
 
-class Segment(TypedDict):
-    id:int
-    text:str
-    start:float
-    duration:float
-    end:float
-
-class Chunk(TypedDict):
-    chunk_id:str
-    video_id:str
-    text:str
-    start:float
-    end:float
-    segment_ids:List[int]
-    token_count:int
-
-MODEL_NAME=os.getenv("TOKENIZER_MODEL")
+MODEL_NAME=settings.tokenizer_model
 
 @lru_cache(maxsize=1)
 def get_tokenizer():
@@ -72,7 +54,7 @@ def chunk_segments(
     if not segments:
         return chunks
     
-    seg_token_counts = [count_tokens(seg["text"]) for seg in segments]
+    seg_token_counts = [count_tokens(seg.text) for seg in segments]
 
     start_idx=0
     chunk_num=0
@@ -84,14 +66,14 @@ def chunk_segments(
             end_idx += 1
 
         chunk_slice = segments[start_idx:end_idx]
-        chunk_text=" ".join(seg["text"] for seg in chunk_slice)
+        chunk_text=" ".join(seg.text for seg in chunk_slice)
         if not chunk_text.strip():
             start_idx = end_idx
             continue
 
-        chunk_start=chunk_slice[0]["start"]
-        chunk_end=chunk_slice[-1]["end"]
-        chunk_segment_ids=[seg["id"] for seg in chunk_slice]  
+        chunk_start=chunk_slice[0].start
+        chunk_end=chunk_slice[-1].end
+        chunk_segment_ids=[seg.id for seg in chunk_slice]  
 
         embed_text = f"passage: {chunk_text}"
         chunk_token_count = count_tokens(embed_text)

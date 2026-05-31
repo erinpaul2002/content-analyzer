@@ -1,15 +1,13 @@
-import os
-from dotenv import load_dotenv
 from pinecone import Pinecone
 from typing import Optional
+from config.settings import settings
 
-load_dotenv()
 
 class PineconeHandler:
 
     def __init__ (self,api_key:Optional[str]=None, index_name:Optional[str]=None):
-        self.api_key=api_key or os.getenv("PINECONE_API_KEY")
-        self.index_name=index_name or os.getenv("PINECONE_INDEX_NAME")
+        self.api_key=api_key or settings.pinecone_api_key
+        self.index_name=index_name or settings.pinecone_index_name
         if not self.api_key:
             raise RuntimeError("Pinecone api key not set")
         self._client:Optional[Pinecone]=None

@@ -1,12 +1,11 @@
 import json
-import os
 from datetime import datetime,timezone
 from pathlib import Path
-from dotenv import load_dotenv
+from config.settings import settings
+import os
+from domain.models import VideoMetadata,TranscriptSegment,VideoData
 
-load_dotenv()
-
-TRANSCRIPTS_DIR=os.getenv("TRANSCRIPTS_DIR")
+TRANSCRIPTS_DIR=settings.transcripts_directory
 
 def ensure_directory_exists(directory: str) -> Path:
     path = Path(directory)
@@ -54,3 +53,33 @@ def transcript_exists(video_id:str) -> bool:
     transcripts_directory=ensure_directory_exists(TRANSCRIPTS_DIR)
     file_path = transcripts_directory / f"{video_id}.json"
     return file_path.exists()
+
+def as_video_data(raw: dict) -> VideoData:
+    raw_transcript = raw.get('transcript', {})
+    segments=[]
+    for key in sorted(raw_transcript.keys(), key=lambda x: int(x)):
+        item = raw_transcript[key]
+        text=item.get("text","")
+        start=item.get("start",0.0)
+        duration=item.get("duration",0.0)
+        end=item.get("end",start+duration)
+        segments.append(TranscriptSegment(text=text,start=start,duration=duration,end=end))
+    metadata=VideoMetadata(
+        title=raw.get("metadata", {}).get("title"),
+        creator=raw.get("metadata", {}).get("creator"),
+        upload_date=raw.get("metadata", {}).get("upload_date"),
+        duration=raw.get("metadata", {}).get("duration"),
+        views=raw.get("metadata", {}).get("views"),
+        likes=raw.get("metadata", {}).get("likes"),
+        comments=raw.get("metadata", {}).get("comments"),
+        subscribercount=raw.get("metadata", {}).get("subscribercount"),
+        profile_url=raw.get("metadata", {}).get("profile_url"),
+        thumbnail_url=raw.get("metadata", {}).get("thumbnail_url"),
+        hashtags=raw.get("metadata", {}).get("hashtags")
+    )
+    return VideoData(
+        video_id=raw.get("video_id"),
+        metadata=metadata,
+        transcript=segments,
+        timestamp=datetime.fromisoformat(raw.get("timestamp")) if raw.get("timestamp") else None
+    )

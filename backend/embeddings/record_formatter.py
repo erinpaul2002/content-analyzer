@@ -1,14 +1,13 @@
 from typing import List
-from domain.models import EmbeddableRecord,Chunk
+from domain.models import EmbeddableRecord, Chunk
 
 def prepare_records_for_embedding(
-    chunks:List[Chunk],
-    session_id:str
+    chunks: List[Chunk],
+    session_id: str
 ) -> List[EmbeddableRecord]:
-    
-    records=[]
+    records = []
     for chunk in chunks:
-        record= EmbeddableRecord(
+        record = EmbeddableRecord(
             chunk_id=chunk.chunk_id,
             chunk_text=chunk.text,
             video_id=chunk.video_id,
@@ -18,5 +17,3 @@ def prepare_records_for_embedding(
         )
         records.append(record)
     return records
-
-   

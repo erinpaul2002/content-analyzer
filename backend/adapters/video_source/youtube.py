@@ -57,18 +57,17 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             "profile_url": data["items"][0]["snippet"]["thumbnails"]["high"]["url"]
         }
 
-    def get_video_transcript(self, video_id: str) -> dict | None:
+    def get_video_transcript(self, video_id: str) -> list| None:
         try:
-            ytt_api = YouTubeTranscriptApi()
-            data = ytt_api.fetch(video_id)
-            transcript = {
-                i: {
+            data = YouTubeTranscriptApi().fetch(video_id)
+            transcript = []
+            for i, snippet in enumerate(data):
+                transcript.append({
+                    "id":i,
                     "text": snippet.text,
                     "start": snippet.start,
                     "duration": snippet.duration,
-                }
-                for i, snippet in enumerate(data)
-            }
+                })
             return transcript
         except Exception as e:
             print(f"Error fetching transcript: {e}")

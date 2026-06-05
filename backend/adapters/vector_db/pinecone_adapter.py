@@ -35,3 +35,20 @@ class PineconeVectorDBAdapter:
             )
         except Exception as e:
             raise RuntimeError(f"Failed to upsert records to Pinecone: {e}")
+
+
+    def search(self,query_text:str,namespace:str,top_k:int=5)->list[dict]:
+        response = self.index.search_records(
+            namespace=namespace,
+            query={"inputs":{"text":query_text},"top_k":top_k},
+            fields=["chunk_text","video_id","start_time","end_time","session_id"]
+        )
+
+        hits=[]
+        for hit in response.get("result",{}).get("hits",[]):
+            hits.append({
+                "chunk_id":hit["_id"],
+                "score":hit["_score"],
+                **hit.get("fields",{})
+            })
+        return hits

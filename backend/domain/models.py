@@ -10,6 +10,7 @@ class VideoMetadata(BaseModel):
     views:Optional[int]=None
     likes:Optional[int]=None
     comments:Optional[int]=None
+    engagement_rate:Optional[float]=None
     subscribercount:Optional[int]=None
     profile_url:Optional[str]=None
     thumbnail_url:Optional[str]=None

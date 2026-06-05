@@ -29,9 +29,19 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
         data = response.json()
         channel_id = data['items'][0]['snippet']['channelId']
         channel_details = self.get_channel_details(channel_id)
-        return {"views": data['items'][0]['statistics']['viewCount'],
-                "likes": data['items'][0]['statistics']['likeCount'],
-                "comments": data['items'][0]['statistics']['commentCount'],
+
+        stats=data['items'][0]['statistics']
+        views=int(stats.get('viewCount',0))
+        likes=int(stats.get('likeCount',0))
+        comments=int(stats.get('commentCount',0))
+
+        engagement_rate = (likes+comments)/views * 100 if views>0 else 0
+
+
+        return {"views": views,
+                "likes": likes,
+                "comments": comments,
+                "engagement_rate": round(engagement_rate, 4),
                 "duration": data['items'][0]['contentDetails']['duration'],
                 "upload_date": data['items'][0]['snippet']['publishedAt'],
                 "creator": data['items'][0]['snippet']['channelTitle'],

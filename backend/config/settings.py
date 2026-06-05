@@ -13,5 +13,8 @@ class Settings:
     pinecone_index_name: str | None = os.getenv("PINECONE_INDEX_NAME")
     tokenizer_model: str | None = os.getenv("TOKENIZER_MODEL")
     transcripts_directory: Path = Path(os.getenv("TRANSCRIPTS_DIRECTORY"))
-
+    gemini_api_key:str | None = os.getenv("GEMINI_API_KEY")
+    groq_api_key:str | None = os.getenv("GROQ_API_KEY")
+    llm_model:str | None = os.getenv("LLM_MODEL")
+    llm_provider:str | None = os.getenv("LLM_PROVIDER")
 settings = Settings()

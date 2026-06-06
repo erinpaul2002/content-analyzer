@@ -58,10 +58,18 @@ def ingest_videos(req: IngestRequest):
             })
     video_id_a=src_adapter.get_video_id(req.url_a)
     video_id_b=src_adapter.get_video_id(req.url_b)
+    
+    valid_video_ids = [v for v in [video_id_a, video_id_b] if v is not None]
+    labels = {}
+    if video_id_a:
+        labels[video_id_a] = "A"
+    if video_id_b:
+        labels[video_id_b] = "B"
+
     session_manifest={
         "session_id":session_id,
-        "video_ids":[video_id_a,video_id_b],
-        "labels":{video_id_a:"A",video_id_b:"B"}
+        "video_ids":valid_video_ids,
+        "labels":labels
     }
 
     # sessions_dir=Path("data/sessions")

@@ -11,7 +11,7 @@ class Settings:
     youtube_url: str | None = os.getenv("YOUTUBE_URL")
     pinecone_api_key: str | None = os.getenv("PINECONE_API_KEY")
     pinecone_index_name: str | None = os.getenv("PINECONE_INDEX_NAME")
-    tokenizer_model: str | None = os.getenv("TOKENIZER_MODEL", "bert-base-uncased")
+    tokenizer_model: str | None = os.getenv("TOKENIZER_MODEL")
     transcripts_directory: Path = Path(os.getenv("TRANSCRIPTS_DIRECTORY", "/tmp"))
     gemini_api_key:str | None = os.getenv("GEMINI_API_KEY")
     groq_api_key:str | None = os.getenv("GROQ_API_KEY")

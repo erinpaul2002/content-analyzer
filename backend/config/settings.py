@@ -18,7 +18,7 @@ class Settings:
     openrouter_api_key:str | None = os.getenv("OPENROUTER_API_KEY")
     llm_model:str | None = os.getenv("LLM_MODEL")
     llm_provider:str | None = os.getenv("LLM_PROVIDER")
-    convex_db_cloud_url:str | None =os.getenv("CONVEX_DB_CLOUD_URL")
+    convex_db_cloud_url:str | None =os.getenv("NEXT_PUBLIC_CONVEX_URL")
 
     #Test mode variables
     testing_mode: bool = os.getenv("TESTING_MODE", "false").lower() == "true"

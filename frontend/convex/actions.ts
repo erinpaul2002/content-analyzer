@@ -65,6 +65,7 @@ export const getSession = query({
 });
 
 export const listSessions = query({
+  args: {},
   handler: async (ctx) => {
     const sessions = await ctx.db.query("sessions").order("desc").collect();
     return sessions;

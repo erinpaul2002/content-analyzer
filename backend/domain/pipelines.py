@@ -1,6 +1,6 @@
 from typing import List
 from adapters.video_source.youtube import YoutubeVideoSourceAdapter
-from adapters.storage.json_storage import JsonStorageAdapter
+from adapters.storage.convex_storage import ConvexStorageAdapter
 from processors.text_processor import normalize_segments
 from processors.chunker import chunk_segments
 from embeddings.record_formatter import prepare_records_for_embedding
@@ -11,7 +11,7 @@ def process_youtube_video(
     session_id:str
 ) -> List[EmbeddableRecord]:
     src_adapter=YoutubeVideoSourceAdapter()
-    storage_adapter=JsonStorageAdapter()
+    storage_adapter=ConvexStorageAdapter()
     print(f"Pipeline Started for URL: {url}")
 
     video_id=src_adapter.get_video_id(url)

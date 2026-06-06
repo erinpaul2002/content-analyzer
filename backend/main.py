@@ -1,7 +1,8 @@
 from sys import prefix
 import uvicorn
 from fastapi import FastAPI
-from api.routers import ingest,chat
+from fastapi.middleware.cors import CORSMiddleware
+from api.routers import ingest,chat,sessions
 from config.settings import settings
 
 
@@ -10,9 +11,17 @@ app=FastAPI(
     description="API for video analysis and comparison"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(ingest.router, prefix="/api",tags=["ingestion"])
 app.include_router(chat.router,prefix="/api/chat",tags=["chat"])
-
+app.include_router(sessions.router,prefix="/api/sessions",tags=["sessions"])
 @app.get("/health",tags=["system"])
 def health_check():
     return {"status": "ok"}

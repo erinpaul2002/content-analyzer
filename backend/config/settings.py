@@ -15,6 +15,15 @@ class Settings:
     transcripts_directory: Path = Path(os.getenv("TRANSCRIPTS_DIRECTORY"))
     gemini_api_key:str | None = os.getenv("GEMINI_API_KEY")
     groq_api_key:str | None = os.getenv("GROQ_API_KEY")
+    openrouter_api_key:str | None = os.getenv("OPENROUTER_API_KEY")
     llm_model:str | None = os.getenv("LLM_MODEL")
     llm_provider:str | None = os.getenv("LLM_PROVIDER")
+    convex_db_cloud_url:str | None =os.getenv("CONVEX_DB_CLOUD_URL")
+
+    #Test mode variables
+    testing_mode: bool = os.getenv("TESTING_MODE", "false").lower() == "true"
+    test_video_a_url: str | None = os.getenv("TEST_VIDEO_A_URL")
+    test_video_b_url: str | None = os.getenv("TEST_VIDEO_B_URL")
+    test_namespace: str | None = os.getenv("TEST_NAMESPACE")
+    test_session_id: str | None = os.getenv("TEST_SESSION_ID")
 settings = Settings()

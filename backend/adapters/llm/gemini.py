@@ -8,7 +8,7 @@ class GeminiLLMAdapter(LLMAdapter):
         self.client = genai.Client(api_key=settings.gemini_api_key)
         self.model = settings.llm_model
 
-    async def generate(self,prompt:str)->str:
+    async def generate(self,prompt:str, stream_queue=None)->str:
         response = self.client.models.generate_content(
             model=self.model,
             contents=prompt

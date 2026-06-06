@@ -40,15 +40,24 @@ class PineconeVectorDBAdapter:
     def search(self,query_text:str,namespace:str,top_k:int=5)->list[dict]:
         response = self.index.search_records(
             namespace=namespace,
-            query={"inputs":{"text":query_text},"top_k":top_k},
+            top_k=top_k,
+            inputs={"text":query_text},
             fields=["chunk_text","video_id","start_time","end_time","session_id"]
         )
 
         hits=[]
-        for hit in response.get("result",{}).get("hits",[]):
+        for hit in response.result.hits:
             hits.append({
-                "chunk_id":hit["_id"],
-                "score":hit["_score"],
-                **hit.get("fields",{})
+                "chunk_id":hit.id,
+                "score":hit.score,
+                **hit.fields
             })
         return hits
+
+    def delete_namespace(self, namespace: str):
+        try:
+            self.index.delete(delete_all=True, namespace=namespace)
+            print(f"Deleted Pinecone namespace: '{namespace}'")
+        except Exception as e:
+            print(f"Failed to delete Pinecone namespace '{namespace}': {e}")
+            raise RuntimeError(f"Failed to delete Pinecone namespace: {e}")

@@ -2,3 +2,6 @@
 .env
 __pycache__/
 pinecone/
+node_modules/
+.env.local
+

@@ -8,7 +8,7 @@ class GroqLLMAdapter(LLMAdapter):
         self.client = AsyncGroq(api_key=settings.groq_api_key)
         self.model = settings.llm_model
 
-    async def generate(self,prompt:str)->str:
+    async def generate(self,prompt:str, stream_queue=None)->str:
         response = await self.client.chat.completions.create(
             messages=[{"role":"user","content":prompt}],
             model=self.model,

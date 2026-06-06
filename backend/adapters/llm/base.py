@@ -3,7 +3,7 @@ from typing import AsyncIterator
 
 class LLMAdapter(ABC):
     @abstractmethod
-    async def generate(self,prompt:str)->str:
+    async def generate(self,prompt:str, stream_queue=None)->str:
         pass
 
     @abstractmethod

@@ -67,9 +67,9 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             "profile_url": data["items"][0]["snippet"]["thumbnails"]["high"]["url"]
         }
 
-    def _get_random_proxy(self) -> str | None:
-        import random
+    def _get_webshare_config(self):
         from pathlib import Path
+        from youtube_transcript_api.proxies import WebshareProxyConfig
         proxy_file = Path("data/proxies.txt")
         # In case we're running from the project root instead of backend dir
         if not proxy_file.exists():
@@ -77,27 +77,25 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             
         if proxy_file.exists():
             with open(proxy_file, "r") as f:
-                proxies = [line.strip() for line in f if line.strip()]
-            if proxies:
-                p = random.choice(proxies)
-                parts = p.split(':')
-                if len(parts) == 4:
-                    ip, port, username, password = parts
-                    return f"http://{username}:{password}@{ip}:{port}"
-                elif len(parts) == 2:
-                    ip, port = parts
-                    return f"http://{ip}:{port}"
+                first_line = next(f, "").strip()
+                if first_line:
+                    parts = first_line.split(':')
+                    if len(parts) >= 4:
+                        # Format is typically IP:PORT:USERNAME:PASSWORD
+                        username = parts[2]
+                        password = parts[3]
+                        return WebshareProxyConfig(
+                            proxy_username=username,
+                            proxy_password=password
+                        )
         return None
 
     def get_video_transcript(self, video_id: str) -> list| None:
         try:
-            proxy_url = self._get_random_proxy()
-            if proxy_url:
-                session = requests.Session()
-                session.proxies = {"http": proxy_url, "https": proxy_url}
-                # Using the standard class methods when passing http_client
-                transcript_list = YouTubeTranscriptApi(http_client=session).list(video_id)
-                data = transcript_list.find_transcript(["en"]).fetch()
+            proxy_config = self._get_webshare_config()
+            if proxy_config:
+                api = YouTubeTranscriptApi(proxy_config=proxy_config)
+                data = api.list(video_id).find_transcript(["en"]).fetch()
             else:
                 data = YouTubeTranscriptApi().fetch(video_id)
                 

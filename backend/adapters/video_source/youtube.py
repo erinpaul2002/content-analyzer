@@ -67,9 +67,40 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             "profile_url": data["items"][0]["snippet"]["thumbnails"]["high"]["url"]
         }
 
+    def _get_random_proxy(self) -> str | None:
+        import random
+        from pathlib import Path
+        proxy_file = Path("data/proxies.txt")
+        # In case we're running from the project root instead of backend dir
+        if not proxy_file.exists():
+            proxy_file = Path("backend/data/proxies.txt")
+            
+        if proxy_file.exists():
+            with open(proxy_file, "r") as f:
+                proxies = [line.strip() for line in f if line.strip()]
+            if proxies:
+                p = random.choice(proxies)
+                parts = p.split(':')
+                if len(parts) == 4:
+                    ip, port, username, password = parts
+                    return f"http://{username}:{password}@{ip}:{port}"
+                elif len(parts) == 2:
+                    ip, port = parts
+                    return f"http://{ip}:{port}"
+        return None
+
     def get_video_transcript(self, video_id: str) -> list| None:
         try:
-            data = YouTubeTranscriptApi().fetch(video_id)
+            proxy_url = self._get_random_proxy()
+            if proxy_url:
+                session = requests.Session()
+                session.proxies = {"http": proxy_url, "https": proxy_url}
+                # Using the standard class methods when passing http_client
+                transcript_list = YouTubeTranscriptApi(http_client=session).list(video_id)
+                data = transcript_list.find_transcript(["en"]).fetch()
+            else:
+                data = YouTubeTranscriptApi().fetch(video_id)
+                
             transcript = []
             for i, snippet in enumerate(data):
                 transcript.append({
@@ -80,5 +111,5 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
                 })
             return transcript
         except Exception as e:
-            print(f"Error fetching transcript: {e}")
+            print(f"Error fetching transcript with youtube_transcript_api: {e}")
             return None

@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = "/tmp"
+
 from functools import lru_cache
 from transformers import AutoTokenizer
 from config.settings import settings

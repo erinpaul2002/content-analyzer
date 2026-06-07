@@ -1,10 +1,10 @@
 #!/bin/bash
 
 echo "Starting Tor..."
-tor --RunAsDaemon 1
+service tor start
 
 echo "Starting Privoxy..."
-privoxy /etc/privoxy/config
+service privoxy start
 
 # Give Tor a few seconds to bootstrap
 sleep 5

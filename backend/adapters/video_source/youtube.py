@@ -67,9 +67,10 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             "profile_url": data["items"][0]["snippet"]["thumbnails"]["high"]["url"]
         }
 
-    def _get_webshare_config(self):
+    def _get_proxy_config(self):
+        import random
         from pathlib import Path
-        from youtube_transcript_api.proxies import WebshareProxyConfig
+        from youtube_transcript_api.proxies import GenericProxyConfig
         proxy_file = Path("data/proxies.txt")
         # In case we're running from the project root instead of backend dir
         if not proxy_file.exists():
@@ -77,22 +78,33 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             
         if proxy_file.exists():
             with open(proxy_file, "r") as f:
-                first_line = next(f, "").strip()
-                if first_line:
-                    parts = first_line.split(':')
+                lines = [line.strip() for line in f if line.strip()]
+                if lines:
+                    selected = random.choice(lines)
+                    parts = selected.split(':')
                     if len(parts) >= 4:
                         # Format is typically IP:PORT:USERNAME:PASSWORD
+                        ip = parts[0]
+                        port = parts[1]
                         username = parts[2]
                         password = parts[3]
-                        return WebshareProxyConfig(
-                            proxy_username=username,
-                            proxy_password=password
+                        proxy_url = f"http://{username}:{password}@{ip}:{port}"
+                        return GenericProxyConfig(
+                            http_url=proxy_url,
+                            https_url=proxy_url
                         )
         return None
 
     def get_video_transcript(self, video_id: str) -> list| None:
+        import time
+        import random
+
+        # Add a random delay to avoid triggering bot detection
+        delay = random.uniform(2.0, 4.0)
+        time.sleep(delay)
+
         try:
-            proxy_config = self._get_webshare_config()
+            proxy_config = self._get_proxy_config()
             if proxy_config:
                 api = YouTubeTranscriptApi(proxy_config=proxy_config)
                 data = api.list(video_id).find_transcript(["en"]).fetch()

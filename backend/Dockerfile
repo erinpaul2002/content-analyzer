@@ -1,9 +1,13 @@
 FROM python:3.10-slim
 
-# Install only Tor (no Privoxy needed — we use SOCKS5 directly)
+# Install Tor
 RUN apt-get update && \
     apt-get install -y tor && \
     rm -rf /var/lib/apt/lists/*
+
+# Fix Tor permissions so it can start in a container
+RUN mkdir -p /var/lib/tor /var/log/tor /run/tor && \
+    chown -R debian-tor:debian-tor /var/lib/tor /var/log/tor /run/tor
 
 WORKDIR /app
 

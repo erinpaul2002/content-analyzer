@@ -1,12 +1,9 @@
 FROM python:3.10-slim
 
-# Install Tor and Privoxy
+# Install only Tor (no Privoxy needed — we use SOCKS5 directly)
 RUN apt-get update && \
-    apt-get install -y tor privoxy && \
+    apt-get install -y tor && \
     rm -rf /var/lib/apt/lists/*
-
-# Configure Privoxy to forward all traffic through Tor's SOCKS5 proxy
-RUN echo "forward-socks5t / 127.0.0.1:9050 ." >> /etc/privoxy/config
 
 WORKDIR /app
 
@@ -24,5 +21,5 @@ RUN chmod +x /app/start.sh
 # Render dynamically assigns the PORT environment variable
 EXPOSE 8000
 
-# Start Tor, Privoxy, and the FastAPI backend
+# Start Tor and the FastAPI backend
 CMD ["/app/start.sh"]

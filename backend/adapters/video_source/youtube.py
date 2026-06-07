@@ -72,8 +72,8 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
         }
 
     def _get_proxy_config(self):
-        # We are using the internal Tor/Privoxy container setup
-        proxy_url = "http://127.0.0.1:8118"
+        # Connect directly to Tor's SOCKS5 proxy (socks5h = DNS through Tor too)
+        proxy_url = "socks5h://127.0.0.1:9050"
         return GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
 
     def get_video_transcript(self, video_id: str) -> list | None:

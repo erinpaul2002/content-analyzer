@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 requests
+PySocks
 pydantic
 python-dotenv
 pytest

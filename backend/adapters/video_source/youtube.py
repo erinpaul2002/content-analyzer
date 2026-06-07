@@ -1,6 +1,10 @@
 import re
+import time
+import random
 import requests
+from pathlib import Path
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig
 from config.settings import settings
 from adapters.video_source.base import VideoSourceAdapter
 
@@ -68,58 +72,33 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
         }
 
     def _get_proxy_config(self):
-        import random
-        from pathlib import Path
-        from youtube_transcript_api.proxies import GenericProxyConfig
-        proxy_file = Path("data/proxies.txt")
-        # In case we're running from the project root instead of backend dir
-        if not proxy_file.exists():
-            proxy_file = Path("backend/data/proxies.txt")
-            
-        if proxy_file.exists():
-            with open(proxy_file, "r") as f:
-                lines = [line.strip() for line in f if line.strip()]
-                if lines:
-                    selected = random.choice(lines)
-                    parts = selected.split(':')
-                    if len(parts) >= 4:
-                        # Format is typically IP:PORT:USERNAME:PASSWORD
-                        ip = parts[0]
-                        port = parts[1]
-                        username = parts[2]
-                        password = parts[3]
-                        proxy_url = f"http://{username}:{password}@{ip}:{port}"
-                        return GenericProxyConfig(
-                            http_url=proxy_url,
-                            https_url=proxy_url
-                        )
-        return None
+        # We are using the internal Tor/Privoxy container setup
+        proxy_url = "http://127.0.0.1:8118"
+        return GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
 
-    def get_video_transcript(self, video_id: str) -> list| None:
-        import time
-        import random
-
-        # Add a random delay to avoid triggering bot detection
-        delay = random.uniform(2.0, 4.0)
-        time.sleep(delay)
+    def get_video_transcript(self, video_id: str) -> list | None:
+        # Add a random delay to simulate human-like intervals
+        time.sleep(random.uniform(2.0, 4.0))
 
         try:
             proxy_config = self._get_proxy_config()
+            
             if proxy_config:
                 api = YouTubeTranscriptApi(proxy_config=proxy_config)
                 data = api.list(video_id).find_transcript(["en"]).fetch()
             else:
                 data = YouTubeTranscriptApi().fetch(video_id)
                 
-            transcript = []
-            for i, snippet in enumerate(data):
-                transcript.append({
-                    "id":i,
+            return [
+                {
+                    "id": i,
                     "text": snippet.text,
                     "start": snippet.start,
                     "duration": snippet.duration,
-                })
-            return transcript
+                }
+                for i, snippet in enumerate(data)
+            ]
+            
         except Exception as e:
             print(f"Error fetching transcript with youtube_transcript_api: {e}")
             return None

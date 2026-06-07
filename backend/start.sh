@@ -1,10 +1,14 @@
 #!/bin/bash
 
+echo "Setting up permissions..."
+mkdir -p /var/log/privoxy /var/run/privoxy
+chown -R privoxy:privoxy /var/log/privoxy /var/run/privoxy /etc/privoxy
+
 echo "Starting Tor..."
-service tor start
+su -s /bin/bash -c "tor > /dev/null" debian-tor &
 
 echo "Starting Privoxy..."
-service privoxy start
+privoxy --no-daemon /etc/privoxy/config &
 
 # Give Tor a few seconds to bootstrap
 sleep 5

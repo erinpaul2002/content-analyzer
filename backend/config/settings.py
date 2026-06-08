@@ -20,6 +20,8 @@ class Settings:
     llm_provider:str | None = os.getenv("LLM_PROVIDER")
     convex_db_cloud_url:str | None =os.getenv("NEXT_PUBLIC_CONVEX_URL")
     allowed_origins: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+    cf_worker_transcript_url: str | None = os.getenv("CF_WORKER_TRANSCRIPT_URL")
+    cf_worker_token: str | None = os.getenv("CF_WORKER_TOKEN")
 
     #Test mode variables
     testing_mode: bool = os.getenv("TESTING_MODE", "false").lower() == "true"

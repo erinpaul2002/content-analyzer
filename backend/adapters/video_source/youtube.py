@@ -3,8 +3,6 @@ import time
 import random
 import requests
 from pathlib import Path
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import GenericProxyConfig
 from config.settings import settings
 from adapters.video_source.base import VideoSourceAdapter
 
@@ -71,34 +69,31 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
             "profile_url": data["items"][0]["snippet"]["thumbnails"]["high"]["url"]
         }
 
-    def _get_proxy_config(self):
-        # Connect directly to Tor's SOCKS5 proxy (socks5h = DNS through Tor too)
-        proxy_url = "socks5h://127.0.0.1:9050"
-        return GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+
 
     def get_video_transcript(self, video_id: str) -> list | None:
-        # Add a random delay to simulate human-like intervals
-        time.sleep(random.uniform(2.0, 4.0))
-
         try:
-            proxy_config = self._get_proxy_config()
+            worker_url = settings.cf_worker_transcript_url
+            worker_token = settings.cf_worker_token
+
+            response = requests.post(
+                worker_url,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Worker-Token": worker_token
+                },
+                json={"url": f"https://www.youtube.com/watch?v={video_id}"},
+                timeout=15
+            )
+            response.raise_for_status()
             
-            if proxy_config:
-                api = YouTubeTranscriptApi(proxy_config=proxy_config)
-                data = api.list(video_id).find_transcript(["en"]).fetch()
-            else:
-                data = YouTubeTranscriptApi().fetch(video_id)
+            data = response.json()
+            if "transcript" not in data or not data["transcript"]:
+                print("Cloudflare worker returned empty transcript data.")
+                return None
                 
-            return [
-                {
-                    "id": i,
-                    "text": snippet.text,
-                    "start": snippet.start,
-                    "duration": snippet.duration,
-                }
-                for i, snippet in enumerate(data)
-            ]
+            return data["transcript"]
             
         except Exception as e:
-            print(f"Error fetching transcript with youtube_transcript_api: {e}")
+            print(f"Error fetching transcript via Cloudflare Worker: {e}")
             return None

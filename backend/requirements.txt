@@ -1,15 +1,11 @@
 fastapi
 uvicorn
 requests
-PySocks
 pydantic
 python-dotenv
 pytest
 pytest-asyncio
-youtube-transcript-api
 pinecone
-transformers
-sentencepiece
 langgraph
 langchain-core
 langchain-google-genai

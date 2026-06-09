@@ -45,12 +45,25 @@ export const createSession = mutation({
     labels: v.any(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("sessions", {
-      session_id: args.session_id,
-      video_ids: args.video_ids,
-      labels: args.labels,
-      timestamp: Date.now(),
-    });
+    const existing = await ctx.db
+      .query("sessions")
+      .withIndex("by_session_id", (q) => q.eq("session_id", args.session_id))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        video_ids: args.video_ids,
+        labels: args.labels,
+        timestamp: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("sessions", {
+        session_id: args.session_id,
+        video_ids: args.video_ids,
+        labels: args.labels,
+        timestamp: Date.now(),
+      });
+    }
   },
 });
 

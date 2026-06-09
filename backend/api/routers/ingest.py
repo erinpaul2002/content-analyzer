@@ -15,7 +15,7 @@ def ingest_videos(req: IngestRequest):
         req.url_a=settings.test_video_a_url
         req.url_b=settings.test_video_b_url
     else:
-        session_id=str(uuid.uuid4())
+        session_id=req.session_id if req.session_id else str(uuid.uuid4())
     
     src_adapter=YoutubeVideoSourceAdapter()
     storage_adapter=ConvexStorageAdapter()

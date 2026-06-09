@@ -11,12 +11,13 @@ const BASE_URL =
 /* ─── Ingest ─── */
 export async function ingestVideos(
   urlA: string,
-  urlB: string
+  urlB: string,
+  sessionId?: string
 ): Promise<IngestResponse> {
   const res = await fetch(`${BASE_URL}/api/ingest`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url_a: urlA, url_b: urlB }),
+    body: JSON.stringify({ url_a: urlA, url_b: urlB, session_id: sessionId }),
   });
   if (!res.ok) {
     const err = await res.text();

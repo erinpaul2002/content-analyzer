@@ -77,7 +77,7 @@ export default function Home() {
     }, 1200);
   }, []);
 
-  const handleCompare = useCallback(async (customUrlA?: string | React.MouseEvent, customUrlB?: string) => {
+  const handleCompare = useCallback(async (customUrlA?: string | React.MouseEvent, customUrlB?: string, retrySessionId?: string) => {
     const finalUrlA = typeof customUrlA === 'string' ? customUrlA : urlA;
     const finalUrlB = typeof customUrlB === 'string' ? customUrlB : urlB;
 
@@ -91,7 +91,7 @@ export default function Home() {
     setTranscriptB(undefined);
 
     try {
-      const res = await ingestVideos(finalUrlA.trim(), finalUrlB.trim());
+      const res = await ingestVideos(finalUrlA.trim(), finalUrlB.trim(), retrySessionId);
       
       const hasErrors = res.results.some((r: any) => r.status === "error");
       
@@ -141,19 +141,23 @@ export default function Home() {
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setShowIngestModal(false);
-    handleCompare(urlA, urlB);
+    const sid = pendingSessionId || undefined;
+    setPendingSessionId(null);
+    handleCompare(urlA, urlB, sid);
   };
 
-  const handleReplace = (failedUrl: string, newUrl: string) => {
+  const handleReplace = async (failedUrl: string, newUrl: string) => {
     setShowIngestModal(false);
+    const sid = pendingSessionId || undefined;
+    setPendingSessionId(null);
     if (failedUrl === urlA) {
       setUrlA(newUrl);
-      handleCompare(newUrl, urlB);
+      handleCompare(newUrl, urlB, sid);
     } else if (failedUrl === urlB) {
       setUrlB(newUrl);
-      handleCompare(urlA, newUrl);
+      handleCompare(urlA, newUrl, sid);
     }
   };
 

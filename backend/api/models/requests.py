@@ -7,3 +7,6 @@ class IngestRequest(BaseModel):
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+
+class ConfirmIngestRequest(BaseModel):
+    session_id: str

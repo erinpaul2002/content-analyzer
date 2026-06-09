@@ -186,23 +186,7 @@ export default function ChatMessage({
           />
         )}
 
-        {message.reasoning && (
-          <details className="mt-3 group">
-            <summary className="cursor-pointer text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200 ease-out select-none flex items-center gap-1.5">
-              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[var(--bg-glass-strong)] border border-[var(--border)] group-open:bg-[var(--accent-muted)] group-open:text-[var(--accent)] transition-colors duration-200">
-                <svg width="8" height="8" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform transition-transform duration-200 group-open:rotate-90">
-                  <path d="M3.5 1.5L7.5 5L3.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-              Thought process
-            </summary>
-            <div className="mt-2 pl-3 border-l-[1.5px] border-[var(--border)] py-1 pr-2">
-              <p className="whitespace-pre-wrap text-[12px] text-[var(--text-secondary)] font-mono leading-relaxed opacity-80">
-                {message.reasoning}
-              </p>
-            </div>
-          </details>
-        )}
+
 
         {message.citations && message.citations.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">

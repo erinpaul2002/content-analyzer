@@ -63,7 +63,6 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
-  reasoning?: string;
   timestamp: Date;
 }
 

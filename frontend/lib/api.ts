@@ -26,6 +26,19 @@ export async function ingestVideos(
   return normalizeIngestResponse(payload);
 }
 
+export async function confirmIngest(sessionId: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}/api/confirm_ingest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Confirm Ingest failed: ${err}`);
+  }
+  return res.json();
+}
+
 interface RawVideoPayload {
   video_id?: string;
   metadata?: RawVideoMetadata | null;

@@ -72,28 +72,38 @@ class YoutubeVideoSourceAdapter(VideoSourceAdapter):
 
 
     def get_video_transcript(self, video_id: str) -> list | None:
-        try:
-            worker_url = settings.cf_worker_transcript_url
-            worker_token = settings.cf_worker_token
+        worker_url = settings.cf_worker_transcript_url
+        worker_token = settings.cf_worker_token
 
-            response = requests.post(
-                worker_url,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Worker-Token": worker_token
-                },
-                json={"url": f"https://www.youtube.com/watch?v={video_id}"},
-                timeout=15
-            )
-            response.raise_for_status()
-            
-            data = response.json()
-            if "transcript" not in data or not data["transcript"]:
-                print("Cloudflare worker returned empty transcript data.")
-                return None
+        max_retries = 3
+        base_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(
+                    worker_url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Worker-Token": worker_token
+                    },
+                    json={"url": f"https://www.youtube.com/watch?v={video_id}"},
+                    timeout=15
+                )
+                response.raise_for_status()
                 
-            return data["transcript"]
-            
-        except Exception as e:
-            print(f"Error fetching transcript via Cloudflare Worker: {e}")
-            return None
+                data = response.json()
+                if "transcript" not in data or not data["transcript"]:
+                    print(f"Cloudflare worker returned empty transcript data. Attempt {attempt + 1}")
+                    if attempt < max_retries - 1:
+                        time.sleep(base_delay * (2 ** attempt) + random.uniform(0, 1))
+                        continue
+                    return None
+                    
+                return data["transcript"]
+                
+            except Exception as e:
+                print(f"Error fetching transcript via Cloudflare Worker: {e}. Attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(base_delay * (2 ** attempt) + random.uniform(0, 1))
+                    continue
+                return None

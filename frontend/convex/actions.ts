@@ -121,15 +121,23 @@ export const deleteSession = mutation({
       await ctx.db.delete(log._id);
     }
 
-    // Delete video details
+    // Delete video details only if they are not used in other sessions
     if (session.video_ids && session.video_ids.length > 0) {
+      const allSessions = await ctx.db.query("sessions").collect();
+      
       for (const video_id of session.video_ids) {
-        const video = await ctx.db
-          .query("videos")
-          .withIndex("by_video_id", (q) => q.eq("video_id", video_id))
-          .first();
-        if (video) {
-          await ctx.db.delete(video._id);
+        const isUsedElsewhere = allSessions.some(
+          (s) => s._id !== session._id && s.video_ids?.includes(video_id)
+        );
+
+        if (!isUsedElsewhere) {
+          const video = await ctx.db
+            .query("videos")
+            .withIndex("by_video_id", (q) => q.eq("video_id", video_id))
+            .first();
+          if (video) {
+            await ctx.db.delete(video._id);
+          }
         }
       }
     }

@@ -7,7 +7,8 @@ import Sidebar from "./components/Sidebar";
 import VideoCard from "./components/VideoCard";
 import { ComparisonSkeleton } from "./components/SkeletonLoader";
 import ChatPanel from "./components/ChatPanel";
-import { ingestVideos, streamMessage, getSessions, getSessionDetails, normalizeVideoPayload, deleteSession } from "@/lib/api";
+import IngestModal from "./components/IngestModal";
+import { ingestVideos, streamMessage, getSessions, getSessionDetails, normalizeVideoPayload, deleteSession, confirmIngest } from "@/lib/api";
 import { parseTimeToSeconds } from "@/lib/utils";
 import type { ChatMessage, TranscriptSegment, VideoMetadata } from "@/lib/types";
 
@@ -36,6 +37,11 @@ export default function Home() {
   const [seekRequestA, setSeekRequestA] = useState<{ time: number; t: number } | null>(null);
   const [seekRequestB, setSeekRequestB] = useState<{ time: number; t: number } | null>(null);
   const [highlightedVideoId, setHighlightedVideoId] = useState<string | null>(null);
+
+  const [ingestResults, setIngestResults] = useState<{url: string, status: string, message?: string}[]>([]);
+  const [showIngestModal, setShowIngestModal] = useState(false);
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const [pendingVideos, setPendingVideos] = useState<any>(null);
 
   const videoContexts = useMemo(() => {
     const ctx: Record<string, { label: string; durationSec: number }> = {};
@@ -71,8 +77,11 @@ export default function Home() {
     }, 1200);
   }, []);
 
-  const handleCompare = useCallback(async () => {
-    if (!urlA.trim() || !urlB.trim()) return;
+  const handleCompare = useCallback(async (customUrlA?: string | React.MouseEvent, customUrlB?: string) => {
+    const finalUrlA = typeof customUrlA === 'string' ? customUrlA : urlA;
+    const finalUrlB = typeof customUrlB === 'string' ? customUrlB : urlB;
+
+    if (!finalUrlA.trim() || !finalUrlB.trim()) return;
 
     setAppState("loading");
     setMessages([]);
@@ -82,12 +91,34 @@ export default function Home() {
     setTranscriptB(undefined);
 
     try {
-      const res = await ingestVideos(urlA.trim(), urlB.trim());
-      setSessionId(res.session_id);
-      setVideoA(res.videos?.A?.metadata);
-      setVideoB(res.videos?.B?.metadata);
-      setTranscriptA(res.videos?.A?.transcript);
-      setTranscriptB(res.videos?.B?.transcript);
+      const res = await ingestVideos(finalUrlA.trim(), finalUrlB.trim());
+      
+      const hasErrors = res.results.some((r: any) => r.status === "error");
+      
+      if (hasErrors) {
+        setIngestResults(res.results);
+        setPendingSessionId(res.session_id);
+        setPendingVideos(res.videos);
+        setShowIngestModal(true);
+        return;
+      }
+      
+      await proceedToEmbedding(res.session_id, res.videos);
+    } catch (err) {
+      console.error("Ingest error:", err);
+      setAppState("idle");
+    }
+  }, [urlA, urlB]);
+
+  const proceedToEmbedding = useCallback(async (sid: string, videosObj: any) => {
+    try {
+      await confirmIngest(sid);
+      setSessionId(sid);
+      
+      setVideoA(videosObj?.A?.metadata);
+      setVideoB(videosObj?.B?.metadata);
+      setTranscriptA(videosObj?.A?.transcript);
+      setTranscriptB(videosObj?.B?.transcript);
       
       try {
         const updatedSessions = await getSessions();
@@ -98,10 +129,45 @@ export default function Home() {
       
       setAppState("ready");
     } catch (err) {
-      console.error("Ingest error:", err);
+      console.error("Confirm ingest error:", err);
       setAppState("idle");
     }
-  }, [urlA, urlB]);
+  }, []);
+
+  const handleProceedAnyway = () => {
+    setShowIngestModal(false);
+    if (pendingSessionId) {
+      proceedToEmbedding(pendingSessionId, pendingVideos);
+    }
+  };
+
+  const handleRetry = () => {
+    setShowIngestModal(false);
+    handleCompare(urlA, urlB);
+  };
+
+  const handleReplace = (failedUrl: string, newUrl: string) => {
+    setShowIngestModal(false);
+    if (failedUrl === urlA) {
+      setUrlA(newUrl);
+      handleCompare(newUrl, urlB);
+    } else if (failedUrl === urlB) {
+      setUrlB(newUrl);
+      handleCompare(urlA, newUrl);
+    }
+  };
+
+  const handleCancelIngest = async () => {
+    setShowIngestModal(false);
+    if (pendingSessionId) {
+      try {
+        await deleteSession(pendingSessionId);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    handleNewChat();
+  };
 
   const handleSend = useCallback(
     (message: string) => {
@@ -161,7 +227,6 @@ export default function Home() {
               updated[updated.length - 1] = {
                 ...last,
                 citations: metadata.citations,
-                reasoning: metadata.reasoning,
               };
             }
             return updated;
@@ -221,7 +286,6 @@ export default function Home() {
               role: "assistant",
               content: turn.final_answer,
               citations: turn.transcript_chunks_retrieved || [],
-              reasoning: turn.reasoning,
               timestamp: new Date(turn.timestamp || Date.now()),
             });
           }
@@ -256,6 +320,14 @@ export default function Home() {
 
   return (
     <div className="relative flex h-[100dvh] overflow-hidden">
+      <IngestModal
+        isOpen={showIngestModal}
+        results={ingestResults}
+        onProceed={handleProceedAnyway}
+        onRetry={handleRetry}
+        onReplace={handleReplace}
+        onCancel={handleCancelIngest}
+      />
       <Sidebar
         activeSessionId={sessionId || undefined}
         sessions={sessions}
@@ -336,7 +408,10 @@ export default function Home() {
         <div className="relative flex-1 w-full overflow-hidden flex flex-col">
           {/* Main Grid Container */}
           <div 
-            className="w-full mx-auto transition-all duration-700 ease-[var(--ease-in-out)] h-full px-4 sm:px-6 lg:px-8 pb-4"
+            className={clsx(
+              "w-full mx-auto transition-all duration-700 ease-[var(--ease-in-out)] h-full px-4 sm:px-6 lg:px-8",
+              (!showThreePanel && appState !== "idle") ? "pb-28" : "pb-4"
+            )}
             style={{
                maxWidth: showThreePanel ? "1700px" : "1240px",
                paddingTop: (!showThreePanel && appState === "idle") ? "22vh" : "1.25rem"
